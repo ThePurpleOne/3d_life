@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/g3n/engine/app"
@@ -9,17 +8,19 @@ import (
 	"github.com/g3n/engine/core"
 	"github.com/g3n/engine/geometry"
 	"github.com/g3n/engine/gls"
-	"github.com/g3n/engine/graphic"
 	"github.com/g3n/engine/gui"
 	"github.com/g3n/engine/light"
 	"github.com/g3n/engine/material"
 	"github.com/g3n/engine/math32"
 	"github.com/g3n/engine/renderer"
-	"github.com/g3n/engine/util/helper"
 	"github.com/g3n/engine/window"
 )
 
 func main() {
+
+	var CUBE_SIZE float32
+	CUBE_SIZE = 1
+	SIZE_WORLD := 10
 
 	// Create application and scene
 	a := app.App()
@@ -30,7 +31,8 @@ func main() {
 
 	// Create perspective camera
 	cam := camera.New(1)
-	cam.SetPosition(0, 0, 3)
+	cam_pos := float32(SIZE_WORLD * int(CUBE_SIZE) / 2)
+	cam.SetPosition( cam_pos, cam_pos, 15)
 	scene.Add(cam)
 
 	// Set up orbit control for the camera
@@ -49,32 +51,23 @@ func main() {
 
 	// Create a blue torus and add it to the scene
 	//geom := geometry.NewTorus(1, .4, 12, 32, math32.Pi*2)
-	geom := geometry.NewCube(1)
+	geom := geometry.NewCube(CUBE_SIZE)
 	mat := material.NewStandard(math32.NewColor("red"))
 
-	fmt.Printf("Type geom : %T", geom)
-	fmt.Printf("Type geom : %T", mat)
+	world1 := create_world(geom, mat, 10, 10, 0)
 
-	for i := 0; i < 10; i++ {
-		mesh := graphic.NewMesh(geom, mat)
-		mesh.SetPosition(float32(i) + (float32(i) * 0.1),0.5 , 0)
-		fmt.Println(mesh.Position())
-		scene.Add(mesh)
-	}
-	//mesh := graphic.NewMesh(geom, mat)
-	//fmt.Printf("MESH TYPE : %T", mesh)
-
-	//mesh.SetPosition(0, 0, 0)
-	//scene.Add(meshes)
+	world1.show(scene)
 
 	// Create and add lights to the scene
 	scene.Add(light.NewAmbient(&math32.Color{0.5, 0.5, 1.0}, 0.8))
-	pointLight := light.NewPoint(&math32.Color{1, 1, 1}, 5.0)
-	pointLight.SetPosition(0, 0, 2)
+	pointLight := light.NewPoint(&math32.Color{1, 1, 1}, 10.0)
+	light_pos := float32(SIZE_WORLD * int(CUBE_SIZE) / 2)
+
+	pointLight.SetPosition(light_pos, light_pos, 5)
 	scene.Add(pointLight)
 
 	// Create and add an axis helper to the scene
-	scene.Add(helper.NewAxes(0.5))
+	//scene.Add(helper.NewAxes(0.5))
 
 	// Set background color to gray
 	a.Gls().ClearColor(1.0, 1.0, 1.0, 1.0)
