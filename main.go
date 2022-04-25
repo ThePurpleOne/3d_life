@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/g3n/engine/app"
@@ -56,7 +57,7 @@ func main() {
 
 	world1 := create_world(geom, mat, 10, 10, 0)
 
-	world1.show(scene)
+	world1.add(scene)
 
 	// Create and add lights to the scene
 	scene.Add(light.NewAmbient(&math32.Color{0.5, 0.5, 1.0}, 0.8))
@@ -74,7 +75,25 @@ func main() {
 
 	// Run the application
 	a.Run(func(renderer *renderer.Renderer, deltaTime time.Duration) {
+		
+		// ! CLEAR SCREEN
 		a.Gls().Clear(gls.DEPTH_BUFFER_BIT | gls.STENCIL_BUFFER_BIT | gls.COLOR_BUFFER_BIT)
-		renderer.Render(scene, cam)
+
+		// ! RENDER SCENE WITH CAM
+		err := renderer.Render(scene, cam)
+		if err != nil {
+			panic(err)
+		}
+
+		// ! UPDATE GUI TIMERS
+		gui.Manager().TimerManager.ProcessTimers()
+		
+		// ! UPDATE WORLD
+		fmt.Println("update world")
+		//fmt.Println(world1.cells, "\n\n\n\n")
+		deltaTime.Seconds()
+		world1.process_world(world1) // Update the cells
+		world1.cells[0][0].active = !world1.cells[0][0].active
+		world1.show()
 	})
 }

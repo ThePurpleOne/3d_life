@@ -16,7 +16,7 @@ type cell struct {
 }
 
 type world struct{
-	cells [][]cell
+	cells ([][]cell)
 	w, h, l int
 }
 
@@ -28,29 +28,45 @@ func create_world(shape *geometry.Geometry ,mat *material.Standard , w, h, l int
 		for j := 0; j < h; j++ {
 			mesh := graphic.NewMesh(shape, mat)
 			mesh.SetPosition(float32(i) + (float32(i) * 0.1), float32(j) + (float32(j) * 0.1) , 0)
-			//line = append(line, cell{mesh, math32.Vector3{float32(i), float32(j), 0.0}, 1, (i % 2 == 0)})
-			line = append(line, cell{mesh, math32.Vector3{float32(i), float32(j), 0.0}, 1, true}); //(i % 2 == 0)})
+			line = append(line, cell{mesh, math32.Vector3{float32(i), float32(j), 0.0}, 1, (i * 4 % (j + 1) == 0)})
+			//line = append(line, cell{mesh, math32.Vector3{float32(i), float32(j), 0.0}, 1, true}); //(i % 2 == 0)})
 		}
 		cells = append(cells, line)
 	}
 	return world{cells, w, h, l}
 }
 
-func (w world) show(scene* core.Node){
+func (w world) add(scene* core.Node){
 	for i := 0; i < w.w; i++ {
 		for j := 0; j < w.h; j++ {
-			w.cells[i][j].show(scene)
+			w.cells[i][j].add(scene)
 		}
 	}
 }
 
 // Brief : ADD THE CELL TO THE SCENE TO BE DRAWN
 // Args : [core.Node] scene to draw to
-func (c cell) show(scene* core.Node){
+func (c cell) add(scene* core.Node){
 	if c.is_active(){
 		scene.Add(c.mesh)
-	}else{
+	}
+}
 
+func (w world) show(){
+	for i := 0; i < w.w; i++ {
+		for j := 0; j < w.h; j++ {
+			w.cells[i][j].show()
+		}
+	}
+}
+
+// Brief : ADD THE CELL TO THE SCENE TO BE DRAWN
+// Args : [core.Node] scene to draw to
+func (c* cell) show(){
+	if c.is_active(){
+		c.mesh.SetVisible(true)
+	}else{
+		c.mesh.SetVisible(false)	
 	}
 }
 
@@ -62,14 +78,14 @@ func (c cell) is_active() bool{
 
 // Brief : Count the number of active cells in a world
 // Returns : Number of active cells around a cell
-func count_neighbors(w world, c cell) int{
+func count_neighbors(w world, c* cell) int{
 	neig_count := 0
 	resolution := w.w / c.size
 
 	for i := -1; i < 2; i++ {
 		for j := -1; j < 2; j++ {
-			col := (int(c.pos.X) + i % resolution)
-			row := (int(c.pos.Y) + j % resolution)
+			col := ((int(c.pos.X) + i  + resolution) % resolution)
+			row := ((int(c.pos.Y) + j  + resolution) % resolution)
 			neig_count += bool2int(w.cells[col][row].is_active());
 		}
 	}
@@ -82,25 +98,27 @@ func count_neighbors(w world, c cell) int{
 func (w* world) process_world(world_copy world){
 	
 	neigh_count := 0
-
+	
+	removed, added, stayed := 0, 0, 0
 	for i := 0; i < w.w; i++ {
 		for j := 0; j < w.h; j++ {
-			current := w.cells[i][j]
+			current := &w.cells[i][j]
 
 			neigh_count = count_neighbors(world_copy, current)
 
 			// MAKE CHANGES ON THE CURRENT CELL
 			if current.is_active() && neigh_count < 2{								// ! UNDERNPOPULATION
-				current.active = false
+				current.active = false; removed++;
 			}else if current.is_active() && neigh_count > 3{ 						// ! OVERPOPULATION
-				current.active = false
+				current.active = false ; removed++;
 			}else if !current.is_active() && neigh_count == 3{						// ! REPRODUCTION
-				current.active = true
+				current.active = true ; added++;
 			}else if current.is_active() && (neigh_count == 2 || neigh_count == 3){	// ! STAY ALIVE
-				current.active = true
+				current.active = true ; stayed++;
 			}
 		}
 	}
+	//fmt.Printf("Removed: %d Added: %d Stayed : %d", removed, added, stayed)
 }
 
 // -----------------------------------------------------------------------------
