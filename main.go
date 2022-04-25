@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/g3n/engine/app"
@@ -33,7 +32,7 @@ func main() {
 	// Create perspective camera
 	cam := camera.New(1)
 	cam_pos := float32(SIZE_WORLD * int(CUBE_SIZE) / 2)
-	cam.SetPosition( cam_pos, cam_pos, 15)
+	cam.SetPosition( cam_pos, cam_pos, float32(SIZE_WORLD) + 10)
 	scene.Add(cam)
 
 	// Set up orbit control for the camera
@@ -53,9 +52,9 @@ func main() {
 	// Create a blue torus and add it to the scene
 	//geom := geometry.NewTorus(1, .4, 12, 32, math32.Pi*2)
 	geom := geometry.NewCube(CUBE_SIZE)
-	mat := material.NewStandard(math32.NewColor("red"))
+	mat := material.NewStandard(math32.NewColor("purple"))
 
-	world1 := create_world(geom, mat, 10, 10, 0)
+	world1 := create_world(geom, mat, SIZE_WORLD, SIZE_WORLD, 0)
 
 	world1.add(scene)
 
@@ -71,8 +70,10 @@ func main() {
 	//scene.Add(helper.NewAxes(0.5))
 
 	// Set background color to gray
-	a.Gls().ClearColor(1.0, 1.0, 1.0, 1.0)
+	a.Gls().ClearColor(0.8, 0.8, 0.8, 1.0)
 
+	var time_taken float32 = 0.0
+	
 	// Run the application
 	a.Run(func(renderer *renderer.Renderer, deltaTime time.Duration) {
 		
@@ -88,12 +89,14 @@ func main() {
 		// ! UPDATE GUI TIMERS
 		gui.Manager().TimerManager.ProcessTimers()
 		
-		// ! UPDATE WORLD
-		fmt.Println("update world")
-		//fmt.Println(world1.cells, "\n\n\n\n")
-		deltaTime.Seconds()
-		world1.process_world(world1) // Update the cells
-		world1.cells[0][0].active = !world1.cells[0][0].active
-		world1.show()
+		time_taken += float32(deltaTime.Milliseconds())
+
+		if time_taken > 150 {
+			time_taken = 0
+			// ! UPDATE WORLD
+			world1.process_world(world1) // Update the cells
+			world1.cells[0][0].active = !world1.cells[0][0].active
+			world1.show()
+		}
 	})
 }

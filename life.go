@@ -1,6 +1,8 @@
 package main
 
 import (
+	"math/rand"
+
 	"github.com/g3n/engine/core"
 	"github.com/g3n/engine/geometry"
 	"github.com/g3n/engine/graphic"
@@ -28,7 +30,7 @@ func create_world(shape *geometry.Geometry ,mat *material.Standard , w, h, l int
 		for j := 0; j < h; j++ {
 			mesh := graphic.NewMesh(shape, mat)
 			mesh.SetPosition(float32(i) + (float32(i) * 0.1), float32(j) + (float32(j) * 0.1) , 0)
-			line = append(line, cell{mesh, math32.Vector3{float32(i), float32(j), 0.0}, 1, (i * 4 % (j + 1) == 0)})
+			line = append(line, cell{mesh, math32.Vector3{float32(i), float32(j), 0.0}, 1, (rand.Intn(2) == 0)})
 			//line = append(line, cell{mesh, math32.Vector3{float32(i), float32(j), 0.0}, 1, true}); //(i % 2 == 0)})
 		}
 		cells = append(cells, line)
