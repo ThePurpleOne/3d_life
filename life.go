@@ -49,6 +49,8 @@ func (w world) show(scene* core.Node){
 func (c cell) show(scene* core.Node){
 	if c.is_active(){
 		scene.Add(c.mesh)
+	}else{
+
 	}
 }
 
