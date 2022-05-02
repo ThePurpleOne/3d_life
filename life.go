@@ -18,22 +18,30 @@ type cell struct {
 }
 
 type world struct{
-	cells ([][]cell)
+	cells ([]cell)
 	w, h, l int
 }
 
+// GET THE INDEX OF FLAT ARRAY FROM 3D INDEXING
+func index_3d(x, y, z int) int{
+	// SIZE_WORLD := 10
+	return (z * 10 * 10) + (y * 10) + x;
+}
 
 func create_world(shape *geometry.Geometry ,mat *material.Standard , w, h, l int) world{
-	cells := make([][]cell, 0)
+	cells := make([]cell, 0)
 	for i := 0; i < w; i++ {
-		line := make([]cell, 0)
+		plane := make([]cell, 0)
 		for j := 0; j < h; j++ {
-			mesh := graphic.NewMesh(shape, mat)
-			mesh.SetPosition(float32(i) + (float32(i) * 0.1), float32(j) + (float32(j) * 0.1) , 0)
-			line = append(line, cell{mesh, math32.Vector3{float32(i), float32(j), 0.0}, 1, (rand.Intn(2) == 0)})
-			//line = append(line, cell{mesh, math32.Vector3{float32(i), float32(j), 0.0}, 1, true}); //(i % 2 == 0)})
+			for k := 0; k < l; k++{
+				mesh := graphic.NewMesh(shape, mat)
+				mesh.SetPosition(float32(i) + (float32(i) * 0.1), float32(j) + (float32(j) * 0.1) , float32(k) + (float32(k) * 0.1))
+				plane = append(	plane, 
+								cell{mesh, math32.Vector3{float32(i), float32(j), float32(j)}, 1, (rand.Intn(2) == 0)})
+				//plane = append(plane, cell{mesh, math32.Vector3{float32(i), float32(j), 0.0}, 1, true}); //(i % 2 == 0)})
+			}
 		}
-		cells = append(cells, line)
+		cells = append(cells, plane...)
 	}
 	return world{cells, w, h, l}
 }
@@ -41,7 +49,9 @@ func create_world(shape *geometry.Geometry ,mat *material.Standard , w, h, l int
 func (w world) add(scene* core.Node){
 	for i := 0; i < w.w; i++ {
 		for j := 0; j < w.h; j++ {
-			w.cells[i][j].add(scene)
+			for k := 0; k < w.l; k++{
+				w.cells[index_3d(i, j, k)].add(scene)
+			}
 		}
 	}
 }
@@ -57,7 +67,9 @@ func (c cell) add(scene* core.Node){
 func (w world) show(){
 	for i := 0; i < w.w; i++ {
 		for j := 0; j < w.h; j++ {
-			w.cells[i][j].show()
+			for k := 0; k < w.l; k++{
+				w.cells[index_3d(i, j, k)].show()
+			}
 		}
 	}
 }
@@ -88,12 +100,12 @@ func count_neighbors(w world, c* cell) int{
 		for j := -1; j < 2; j++ {
 			col := ((int(c.pos.X) + i  + resolution) % resolution)
 			row := ((int(c.pos.Y) + j  + resolution) % resolution)
-			neig_count += bool2int(w.cells[col][row].is_active());
+			neig_count += bool2int(w.cells[index_3d(col, row, 0)].is_active());
 		}
 	}
 
 	// Remove self if active
-	neig_count -= bool2int(w.cells[int(c.pos.X)][int(c.pos.Y)].is_active())
+	neig_count -= bool2int(w.cells[index_3d(int(c.pos.X), int(c.pos.Y), 0)].is_active())
 	return neig_count
 }
 
@@ -104,19 +116,22 @@ func (w* world) process_world(world_copy world){
 	removed, added, stayed := 0, 0, 0
 	for i := 0; i < w.w; i++ {
 		for j := 0; j < w.h; j++ {
-			current := &w.cells[i][j]
+			for k := 0; k < w.l; k++{
 
-			neigh_count = count_neighbors(world_copy, current)
+				current := &w.cells[index_3d(i, j, k)]
 
-			// MAKE CHANGES ON THE CURRENT CELL
-			if current.is_active() && neigh_count < 2{								// ! UNDERNPOPULATION
-				current.active = false; removed++;
-			}else if current.is_active() && neigh_count > 3{ 						// ! OVERPOPULATION
-				current.active = false ; removed++;
-			}else if !current.is_active() && neigh_count == 3{						// ! REPRODUCTION
-				current.active = true ; added++;
-			}else if current.is_active() && (neigh_count == 2 || neigh_count == 3){	// ! STAY ALIVE
-				current.active = true ; stayed++;
+				neigh_count = count_neighbors(world_copy, current)
+
+				// MAKE CHANGES ON THE CURRENT CELL
+				if current.is_active() && neigh_count < 2{								// ! UNDERNPOPULATION
+					current.active = false; removed++;
+				}else if current.is_active() && neigh_count > 3{ 						// ! OVERPOPULATION
+					current.active = false ; removed++;
+				}else if !current.is_active() && neigh_count == 3{						// ! REPRODUCTION
+					current.active = true ; added++;
+				}else if current.is_active() && (neigh_count == 2 || neigh_count == 3){	// ! STAY ALIVE
+					current.active = true ; stayed++;
+				}
 			}
 		}
 	}

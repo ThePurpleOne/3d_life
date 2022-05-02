@@ -95,7 +95,7 @@ func main() {
 			time_taken = 0
 			// ! UPDATE WORLD
 			world1.process_world(world1) // Update the cells
-			world1.cells[0][0].active = !world1.cells[0][0].active
+			world1.cells[index_3d(0, 0, 0)].active = !world1.cells[index_3d(0, 0, 0)].active
 			world1.show()
 		}
 	})
